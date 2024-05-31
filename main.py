@@ -3,7 +3,11 @@ from bs4 import BeautifulSoup
 from name import get_balance, get_tickers, set_mode, place_order_market
 
 headers = {'User-Agent': 'Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Version/12.17'}
+<<<<<<< HEAD
 url_count = 711
+=======
+url_count = 706
+>>>>>>> 23d21c53da81d9e03ead751f6c86eb396c6e6e39
 
 # Инструменты для торговли
 tp = 0.005
@@ -12,7 +16,10 @@ qty = 300
 
 # Отсчет времени и количества запросов
 import time
+<<<<<<< HEAD
 from datetime import datetime
+=======
+>>>>>>> 23d21c53da81d9e03ead751f6c86eb396c6e6e39
 start_time = time.time()
 i = 0
 
@@ -25,7 +32,11 @@ while run:
     try:
         response = requests.get(url, headers)
     except:
+<<<<<<< HEAD
         print('ошибка. повторение запроса/время: ', datetime.now())
+=======
+        print('ошибка. повторение запроса')
+>>>>>>> 23d21c53da81d9e03ead751f6c86eb396c6e6e39
         response = requests.get(url, headers)
     soup = BeautifulSoup(response.text, 'lxml')
     data = soup.find_all('meta')
