@@ -9,6 +9,7 @@ session = HTTP(
     api_secret=api_secret
 )
 
+# Получаем баланс единого торгового аккаунта
 async def get_balance():
     try:
         response = await asyncio.to_thread(session.get_wallet_balance, accountType='UNIFIED', coin='USDT')
@@ -17,6 +18,7 @@ async def get_balance():
     except Exception as er:
         print(er, 'гет баланс')
 
+# Получаем все тикеры
 async def get_tickers():
     try:
         data = await asyncio.to_thread(session.get_tickers, category='linear')
@@ -27,6 +29,7 @@ async def get_tickers():
         print(er, 'get tickers')
         return []
 
+# Получаем информацию о лотсайзфильтре ордера
 async def get_precisions(symbol):
     try:
         response = await asyncio.to_thread(session.get_instruments_info, category='inverse', symbol=symbol)
@@ -37,6 +40,7 @@ async def get_precisions(symbol):
         print(er, 'get_precisions')
         return None, None
 
+# Получаем информацию о текущей цене
 async def get_mark_price(symbol):
     try:
         response = await asyncio.to_thread(session.get_tickers, category='linear', symbol=symbol)
@@ -45,6 +49,7 @@ async def get_mark_price(symbol):
     except Exception as er:
         print(er)
 
+# Публикуем ордер
 async def place_order(symbol, side, qty, tp, sl):
     try:
         precisions = await get_precisions(symbol)

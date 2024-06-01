@@ -8,7 +8,7 @@ import asyncio
 headers = {'User-Agent': 'Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Version/12.17'}
 url_count = 718
 
-# Инструменты для торговли
+# Информация для торговли
 tp = 0.005
 sl = 0.005
 
