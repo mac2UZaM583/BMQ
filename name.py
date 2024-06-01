@@ -55,7 +55,6 @@ async def place_order(symbol, side, qty, tp, sl):
         precisions = await get_precisions(symbol)
         mark_price = await get_mark_price(symbol)
         mark_price = float(mark_price)
-        order_qty = round(qty / mark_price, precisions[1])
         print(f'Placing {side} order for ' + symbol, datetime.now())
         tp_price, sl_price = None, None
 
@@ -71,7 +70,7 @@ async def place_order(symbol, side, qty, tp, sl):
             symbol=symbol,
             side='Sell' if side == 0 else 'Buy',
             orderType='market',
-            qty=order_qty,
+            qty=qty,
             takeProfit=tp_price,
             stopLoss=sl_price,
             tpTriggerBy='LastPrice',

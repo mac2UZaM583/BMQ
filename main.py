@@ -6,7 +6,7 @@ from name import get_balance, get_tickers, place_order
 import asyncio
 
 headers = {'User-Agent': 'Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Version/12.17'}
-url_count = 718
+url_count = 720
 
 # Информация для торговли
 tp = 0.005
@@ -43,7 +43,6 @@ async def main():
                             url_count += 1
                             tickers = await get_tickers()
                             balance_usdt = await get_balance()
-                            print(balance_usdt)
 
                             if str(content).count('🔴') == 1:
                                 if ticker in tickers and balance_usdt != 0:
@@ -57,7 +56,7 @@ async def main():
 
                             break
                     i += 1
-                    print(i, int(elapsed_time))
+                    print(i, int(elapsed_time), url_count)
                 except Exception as er:
                     print(er, datetime.now())
         
