@@ -43,15 +43,16 @@ async def main():
                             url_count += 1
                             tickers = await get_tickers()
                             balance_usdt = await get_balance()
+                            qty = int((float(balance_usdt) - 5) * 10)
 
                             if str(content).count('🔴') == 1:
                                 if ticker in tickers and balance_usdt != 0:
-                                    await place_order(ticker, 1, int((float(balance_usdt) - 5) * 10), tp, sl)
+                                    await place_order(ticker, 1, qty, tp, sl)
                                     print(datetime.now())
 
                             if str(content).count('🟢') == 1:
                                 if ticker in tickers and balance_usdt != 0:
-                                    await place_order(ticker, 0, int((float(balance_usdt) - 5) * 10), tp, sl)
+                                    await place_order(ticker, 0, qty, tp, sl)
                                     print(datetime.now())
 
                             break
