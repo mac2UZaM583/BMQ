@@ -35,9 +35,6 @@ async def main():
                     soup = BeautifulSoup(response.text, 'lxml')
                     data = soup.find_all('meta')
 
-                    soup = BeautifulSoup(response.text, 'lxml')
-                    data = soup.find_all('meta')
-
                     # Исходя из данных принимаем решение на сторону ставки
                     for content in data:
                         if '🔴' in str(content) or '🟢' in str(content):

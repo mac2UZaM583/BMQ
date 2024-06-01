@@ -66,7 +66,7 @@ async def place_order(symbol, side, qty, tp, sl):
             symbol=symbol,
             side='Sell' if side == 0 else 'Buy',
             orderType='market',
-            qty=400,
+            qty=order_qty,
             takeProfit=tp_price,
             stopLoss=sl_price,
             tpTriggerBy='LastPrice',
