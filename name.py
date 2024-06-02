@@ -46,14 +46,10 @@ async def get_roundQty(symbol):
         data_minroundQty_2 = data_minroundQty['result']['list'][0]['lotSizeFilter']['minOrderQty']
         roundQty_forTPSL = len(str(mark_price).split('.')[-1]) if '.' in str(data_minroundQty) else 0
         roundQty_forOrder = len(str(data_minroundQty_2).split('.')[-1]) if '.' in str(data_minroundQty_2) else 0
-        print(data_minroundQty_2)
         return roundQty_forTPSL, roundQty_forOrder
     except Exception as er:
         print(er, 'get_precisions')
-        return None
-    
-if __name__ == "__main__":
-    asyncio.run(get_roundQty('ARKMUSDT'))
+        return None   
 
 # Публикуем ордер
 async def place_order(symbol, side, balance, tp, sl):
