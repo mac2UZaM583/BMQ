@@ -1,19 +1,17 @@
 import requests
 from bs4 import BeautifulSoup
-import time
 from datetime import datetime
 from name import get_balance, get_tickers, place_order
 import asyncio
 
 headers = {'User-Agent': 'Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Version/12.17'}
-url_count = 720
+url_count = 725
 
 # Информация для торговли
 tp = 0.005
 sl = 0.005
 
 # Отсчет времени и количества запросов
-start_time = time.time()
 i = 0
 
 async def main():
@@ -23,7 +21,6 @@ async def main():
 
             while True:
                 try:
-                    elapsed_time = time.time() - start_time
                     url = 'https://t.me/pump_dump_screener_demo/' + str(url_count)
 
                     # Получаем данные из http запроса
@@ -38,6 +35,7 @@ async def main():
                     # Исходя из данных принимаем решение на сторону ставки
                     for content in data:
                         if '🔴' in str(content) or '🟢' in str(content):
+                            print('начало создание ордера. время - ', datetime.now())
                             elements = str(content).split()
                             ticker = str(elements[1][11:-1] + 'USDT')
                             url_count += 1
@@ -48,16 +46,14 @@ async def main():
                             if str(content).count('🔴') == 1:
                                 if ticker in tickers and balance_usdt != 0:
                                     await place_order(ticker, 1, qty, tp, sl)
-                                    print(datetime.now())
 
                             if str(content).count('🟢') == 1:
                                 if ticker in tickers and balance_usdt != 0:
                                     await place_order(ticker, 0, qty, tp, sl)
-                                    print(datetime.now())
-
+                            
                             break
                     i += 1
-                    print(i, int(elapsed_time), url_count)
+                    print(i, datetime.now(), url_count)
                 except Exception as er:
                     print(er, datetime.now())
         

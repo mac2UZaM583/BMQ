@@ -13,8 +13,8 @@ session = HTTP(
 async def get_balance():
     try:
         response = await asyncio.to_thread(session.get_wallet_balance, accountType='UNIFIED', coin='USDT')
-        minOrderQty = response['result']['list'][0]['coin'][0]['walletBalance']
-        return minOrderQty
+        balance = response['result']['list'][0]['coin'][0]['walletBalance']
+        return balance
     except Exception as er:
         print(er, 'гет баланс')
 
@@ -29,53 +29,53 @@ async def get_tickers():
         print(er, 'get tickers')
         return []
 
-# Получаем информацию о лотсайзфильтре ордера
-async def get_precisions(symbol):
-    try:
-        response = await asyncio.to_thread(session.get_instruments_info, category='inverse', symbol=symbol)
-        minOrderQty = response['result']['list'][0]['lotSizeFilter']['minOrderQty']
-        roundQty = len(minOrderQty.split('.')[-1])
-        return minOrderQty, roundQty
-    except Exception as er:
-        print(er, 'get_precisions')
-        return None, None
-
 # Получаем информацию о текущей цене
 async def get_mark_price(symbol):
     try:
         response = await asyncio.to_thread(session.get_tickers, category='linear', symbol=symbol)
-        mark_price = float(response['result']['list'][0]['markPrice'])
+        mark_price = float(response['result']['list'][0]['lastPrice'])
         return mark_price
     except Exception as er:
         print(er)
 
-# Публикуем ордер
-async def place_order(symbol, side, qty, tp, sl):
+# Получаем информацию о лотсайзфильтре ордера
+async def get_roundQty(symbol):
     try:
-        precisions = await get_precisions(symbol)
         mark_price = await get_mark_price(symbol)
-        mark_price = float(mark_price)
-        print(f'Placing {side} order for ' + symbol, datetime.now())
-        tp_price, sl_price = None, None
+        data_minroundQty = await asyncio.to_thread(session.get_instruments_info, category='linear', symbol=symbol)
+        data_minroundQty_2 = data_minroundQty['result']['list'][0]['lotSizeFilter']['minOrderQty']
+        roundQty_forTPSL = len(str(mark_price).split('.')[-1]) if '.' in str(data_minroundQty) else 0
+        roundQty_forOrder = len(str(data_minroundQty_2).split('.')[-1]) if '.' in str(data_minroundQty_2) else 0
+        print(data_minroundQty_2)
+        return roundQty_forTPSL, roundQty_forOrder
+    except Exception as er:
+        print(er, 'get_precisions')
+        return None
+    
+if __name__ == "__main__":
+    asyncio.run(get_roundQty('ARKMUSDT'))
 
-        if side == 0:
-            tp_price = mark_price - (mark_price * tp)
-            sl_price = mark_price + (mark_price * sl)
-        else:
-            tp_price = mark_price + (mark_price * tp)
-            sl_price = mark_price - (mark_price * sl)
+# Публикуем ордер
+async def place_order(symbol, side, balance, tp, sl):
+    try:
+        mark_price = await get_mark_price(symbol)
+        roundQty =  await get_roundQty(symbol)
+        qty = round(balance / mark_price, roundQty[1])
+        tp_priceL = round((1 + tp) * mark_price, roundQty[0])
+        sl_priceL = round((1 - sl) * mark_price, roundQty[0])
+        print(f'Placing {side} order for ' + symbol, 'tp price', tp_priceL, 'sl price', sl_priceL, 'qty', qty, 'roundQty', roundQty, datetime.now())
 
         resp = await asyncio.to_thread(session.place_order,
             category='linear',
             symbol=symbol,
-            side='Sell' if side == 0 else 'Buy',
-            orderType='market',
             qty=qty,
-            takeProfit=tp_price,
-            stopLoss=sl_price,
+            side='Sell' if side == 0 else 'Buy',
+            orderType='Market',
+            takeProfit=sl_priceL if side == 0 else tp_priceL,
+            stopLoss=tp_priceL if side == 0 else sl_priceL,
+            isLeverage=10,
             tpTriggerBy='LastPrice',
-            slTriggerBy='LastPrice',
-            marketUnit='quoteCoin'
+            slTriggerBy='LastPrice'
         )
         print(resp)
     except Exception as er:
