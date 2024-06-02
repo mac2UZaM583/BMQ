@@ -8,8 +8,8 @@ headers = {'User-Agent': 'Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Ver
 url_count = 733
 
 # Информация для торговли
-tp = 0.005
-sl = 0.005
+tp = 0.006
+sl = 0.006
 
 # Отсчет времени и количества запросов
 i = 0
@@ -59,5 +59,6 @@ async def main():
         
         except Exception as er:
             print(er)
-
-asyncio.run(main())
+            
+if __name__ == '__main__':
+    asyncio.run(main())
