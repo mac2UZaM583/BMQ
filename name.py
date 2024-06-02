@@ -30,7 +30,7 @@ async def get_tickers():
         return []
 
 # Получаем информацию о текущей цене
-async def get_mark_price(symbol):
+async def get_last_price(symbol):
     try:
         response = await asyncio.to_thread(session.get_tickers, category='linear', symbol=symbol)
         mark_price = float(response['result']['list'][0]['lastPrice'])
@@ -41,7 +41,7 @@ async def get_mark_price(symbol):
 # Получаем информацию о лотсайзфильтре ордера
 async def get_roundQty(symbol):
     try:
-        mark_price = await get_mark_price(symbol)
+        mark_price = await get_last_price(symbol)
         data_minroundQty = await asyncio.to_thread(session.get_instruments_info, category='linear', symbol=symbol)
         data_minroundQty_2 = data_minroundQty['result']['list'][0]['lotSizeFilter']['minOrderQty']
         roundQty_forTPSL = len(str(mark_price).split('.')[-1]) if '.' in str(data_minroundQty) else 0
@@ -54,7 +54,7 @@ async def get_roundQty(symbol):
 # Публикуем ордер
 async def place_order(symbol, side, balance, tp, sl):
     try:
-        mark_price = await get_mark_price(symbol)
+        mark_price = await get_last_price(symbol)
         roundQty =  await get_roundQty(symbol)
         qty = round(balance / mark_price, roundQty[1])
         tp_priceL = round((1 + tp) * mark_price, roundQty[0])
@@ -65,6 +65,7 @@ async def place_order(symbol, side, balance, tp, sl):
             category='linear',
             symbol=symbol,
             qty=qty,
+            marketUnit='baseCoin',
             side='Sell' if side == 0 else 'Buy',
             orderType='Market',
             takeProfit=sl_priceL if side == 0 else tp_priceL,
