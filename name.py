@@ -54,8 +54,8 @@ async def get_roundQty(symbol):
 # Публикуем ордер
 async def place_order(symbol, side, balance, tp, sl):
     try:
-        mark_price = await get_last_price(symbol)
         roundQty =  await get_roundQty(symbol)
+        mark_price = await get_last_price(symbol)
         qty = round(balance / mark_price, roundQty[1])
         tp_priceL = round((1 + tp) * mark_price, roundQty[0])
         sl_priceL = round((1 - sl) * mark_price, roundQty[0])
