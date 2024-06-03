@@ -5,11 +5,11 @@ from name import get_balance, get_tickers, place_order
 import asyncio
 
 headers = {'User-Agent': 'Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Version/12.17'}
-url_count = 733
+url_count = 738
 
 # Информация для торговли
-tp = 0.006
-sl = 0.006
+tp = 0.012
+sl = 0.012
 
 # Отсчет времени и количества запросов
 i = 0
@@ -59,6 +59,6 @@ async def main():
         
         except Exception as er:
             print(er)
-            
+
 if __name__ == '__main__':
     asyncio.run(main())

@@ -77,3 +77,8 @@ async def place_order(symbol, side, balance, tp, sl):
         print(resp)
     except Exception as er:
         print(er, 'place order')
+        with open('errors.txt', 'a', encoding='utf-8') as f:
+            f.write(f"{datetime.now()} | {er}\n\n")
+
+
+
