@@ -29,6 +29,17 @@ async def get_tickers():
         print(er, 'get tickers')
         return []
 
+# Получаем точный тикер если он не подходит
+async def find_tickerDone(ticker, tickers):
+    if ticker not in tickers:
+        for t in tickers:
+            if ticker in t:
+                prefix = t.split(ticker)[0]
+                if prefix.isdigit() and '0' in prefix:
+                    return prefix + ticker
+    else:
+        return ticker
+
 # Получаем информацию о текущей цене
 async def get_last_price(symbol):
     try:
@@ -57,8 +68,13 @@ async def place_order(symbol, side, balance, tp, sl):
         roundQty =  await get_roundQty(symbol)
         mark_price = await get_last_price(symbol)
         qty = round(balance / mark_price, roundQty[1])
-        tp_priceL = round((1 + tp) * mark_price, roundQty[0])
-        sl_priceL = round((1 - sl) * mark_price, roundQty[0])
+
+        if side == 0:
+            tp_priceL = round((1 - tp) * mark_price, roundQty[0])
+            sl_priceL = round((1 + sl) * mark_price, roundQty[0])
+        else:
+            tp_priceL = round((1 + tp) * mark_price, roundQty[0])
+            sl_priceL = round((1 - sl) * mark_price, roundQty[0])
         print(f'Placing {side} order for ' + symbol, 'tp price', tp_priceL, 'sl price', sl_priceL, 'qty', qty, 'roundQty', roundQty, datetime.now())
 
         resp = await asyncio.to_thread(session.place_order,
@@ -68,8 +84,8 @@ async def place_order(symbol, side, balance, tp, sl):
             marketUnit='baseCoin',
             side='Sell' if side == 0 else 'Buy',
             orderType='Market',
-            takeProfit=sl_priceL if side == 0 else tp_priceL,
-            stopLoss=tp_priceL if side == 0 else sl_priceL,
+            takeProfit=tp_priceL,
+            stopLoss=sl_priceL,
             isLeverage=10,
             tpTriggerBy='LastPrice',
             slTriggerBy='LastPrice'
