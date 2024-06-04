@@ -29,6 +29,17 @@ async def get_tickers():
         print(er, 'get tickers')
         return []
 
+# Получаем точный тикер если он не подходит
+async def find_tickerDone(ticker, tickers):
+    if ticker not in tickers:
+        for t in tickers:
+            if ticker in t:
+                prefix = t.split(ticker)[0]
+                if prefix.isdigit() and '0' in prefix:
+                    return prefix + ticker
+    else:
+        return ticker
+
 # Получаем информацию о текущей цене
 async def get_last_price(symbol):
     try:
