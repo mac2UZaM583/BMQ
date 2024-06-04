@@ -1,12 +1,12 @@
-from keys import api_key, api_secret
+from keys import api_key_test1, api_secret_test1
 from pybit.unified_trading import HTTP
 import asyncio
 from datetime import datetime
 
 session = HTTP(
     demo=True,
-    api_key=api_key,
-    api_secret=api_secret
+    api_key=api_key_test1,
+    api_secret=api_secret_test1
 )
 
 # Получаем баланс единого торгового аккаунта
