@@ -7,7 +7,8 @@ from name_test_2 import place_order as place_order_test_2
 import asyncio
 
 headers = {'User-Agent': 'Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Version/12.17'}
-url_count = 758
+with open('urlCount.txt', 'r', encoding='utf-8') as f:
+    url_count = int(f.read())
 
 # Информация для торговли
 tp = 0.024
@@ -61,6 +62,8 @@ async def main():
                             break
                     i += 1
                     print(i, datetime.now(), url_count)
+                    with open('urlCount.txt', 'w', encoding='utf-8') as f:
+                        f.write(str(url_count))
                 except Exception as er:
                     print(er, datetime.now())
         

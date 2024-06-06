@@ -13,7 +13,7 @@ session = HTTP(
 async def get_balance():
     try:
         response = await asyncio.to_thread(session.get_wallet_balance, accountType='UNIFIED', coin='USDT')
-        balance = response['result']['list'][0]['coin'][0]['walletBalance']
+        balance = response['result']['list'][0]['coin'][0]['availableToWithdraw']
         return balance
     except Exception as er:
         print(er, 'гет баланс')
