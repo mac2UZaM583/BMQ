@@ -21,7 +21,6 @@ async def main():
     global url_count, i
     while True:
         try:
-
             while True:
                 try:
                     url = 'https://t.me/pump_dump_screener_demo/' + str(url_count)
@@ -61,12 +60,13 @@ async def main():
                             
                             with open('urlCount.txt', 'w', encoding='utf-8') as f:
                                 f.write(str(url_count))
+                            with open('urlCount.txt', 'r', encoding='utf-8') as f:
+                                url_count = int(f.read())
                             break
                     i += 1
                     print(i, datetime.now(), url_count)
                 except Exception as er:
                     print(er, datetime.now())
-        
         except Exception as er:
             print(er)
 
