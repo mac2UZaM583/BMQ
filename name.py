@@ -2,9 +2,11 @@ from keys import api_key, api_secret
 from pybit.unified_trading import HTTP
 import asyncio
 from datetime import datetime
+from pprint import pprint
 
 session = HTTP(
-    demo=True,
+    # demo=True,
+    # testnet=True,
     api_key=api_key,
     api_secret=api_secret
 )
@@ -12,8 +14,8 @@ session = HTTP(
 # Получаем баланс единого торгового аккаунта
 async def get_balance():
     try:
-        response = await asyncio.to_thread(session.get_wallet_balance, accountType='UNIFIED', coin='USDT')
-        balance = response['result']['list'][0]['coin'][0]['availableToWithdraw']
+        response = await asyncio.to_thread(session.get_wallet_balance, accountType='CONTRACT', coin='USDT')
+        balance = response['result']['list'][0]['coin'][0]['walletBalance']
         return balance
     except Exception as er:
         print(er, 'гет баланс')
@@ -68,15 +70,14 @@ async def place_order(symbol, side, balance, tp, sl):
         roundQty =  await get_roundQty(symbol)
         mark_price = await get_last_price(symbol)
         qty = round(balance / mark_price, roundQty[1])
-
         if side == 0:
             tp_priceL = round((1 - tp) * mark_price, roundQty[0])
             sl_priceL = round((1 + sl) * mark_price, roundQty[0])
         else:
             tp_priceL = round((1 + tp) * mark_price, roundQty[0])
             sl_priceL = round((1 - sl) * mark_price, roundQty[0])
+        
         print(f'Placing {side} order for ' + symbol, 'tp price', tp_priceL, 'sl price', sl_priceL, 'qty', qty, 'roundQty', roundQty, datetime.now())
-
         resp = await asyncio.to_thread(session.place_order,
             category='linear',
             symbol=symbol,
@@ -90,7 +91,27 @@ async def place_order(symbol, side, balance, tp, sl):
             tpTriggerBy='LastPrice',
             slTriggerBy='LastPrice'
         )
-        print(resp)
+        pprint(resp)
+
+        entryPrice = session.get_positions(
+            category='linear',
+            symbol=symbol
+        )['result']['list'][0]['avgPrice']
+        pprint(entryPrice)
+        if side == 0:
+            tp_priceL = round((1 - tp) * float(entryPrice), roundQty[0])
+            sl_priceL = round((1 + sl) * float(entryPrice), roundQty[0])
+        else:
+            tp_priceL = round((1 + tp) * float(entryPrice), roundQty[0])
+            sl_priceL = round((1 - sl) * float(entryPrice), roundQty[0])
+        print(session.set_trading_stop(
+            category='linear',
+            symbol=symbol,
+            tpslMode='Full',
+            takeProfit=tp_priceL,
+            stopLoss=sl_priceL,
+            positionIdx=0
+        ))
     except Exception as er:
         print(er, 'place order')
         with open('errors.txt', 'a', encoding='utf-8') as f:

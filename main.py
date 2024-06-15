@@ -2,8 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from name import get_balance, get_tickers, find_tickerDone, place_order
-from name_test_1 import place_order as place_order_test_1
-from name_test_2 import place_order as place_order_test_2
 import asyncio
 
 headers = {'User-Agent': 'Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Version/12.17'}
@@ -49,14 +47,10 @@ async def main():
                             if str(content).count('🔴') == 1:
                                 if tickerDone in tickers and balance_usdt != 0:
                                     await place_order(tickerDone, 1, qty, tp, sl)
-                                    await place_order_test_1(tickerDone, 1, qty*2, 0.012, 0.012)
-                                    await place_order_test_2(tickerDone, 1, qty*2, 0.012, 0.024)
 
                             if str(content).count('🟢') == 1:
                                 if tickerDone in tickers and balance_usdt != 0:
                                     await place_order(tickerDone, 0, qty, tp, sl)
-                                    await place_order_test_1(tickerDone, 0, qty*2, 0.012, 0.012)
-                                    await place_order_test_2(tickerDone, 0, qty*2, 0.012, 0.024)
                             
                             with open('urlCount.txt', 'w', encoding='utf-8') as f:
                                 f.write(str(url_count))
