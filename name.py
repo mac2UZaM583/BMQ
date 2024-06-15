@@ -93,11 +93,11 @@ async def place_order(symbol, side, balance, tp, sl):
         )
         pprint(resp)
 
+        # Более точное выставление тп и сл ордеров
         entryPrice = session.get_positions(
             category='linear',
             symbol=symbol
         )['result']['list'][0]['avgPrice']
-        pprint(entryPrice)
         if side == 0:
             tp_priceL = round((1 - tp) * float(entryPrice), roundQty[0])
             sl_priceL = round((1 + sl) * float(entryPrice), roundQty[0])
