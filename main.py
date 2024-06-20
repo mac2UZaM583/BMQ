@@ -1,68 +1,34 @@
-import requests
-from bs4 import BeautifulSoup
-from datetime import datetime
-from name import get_balance, get_tickers, find_tickerDone, place_order
-import asyncio
+from smq import smq
+from name import get_balance, place_order, get_last_price, get_roundQty
+from pprint import pprint
+from decimal import Decimal
 
-headers = {'User-Agent': 'Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Version/12.17'}
-with open('urlCount.txt', 'r', encoding='utf-8') as f:
-    url_count = int(f.read())
+tp = 0.004
+sl = 0.006
 
-# Информация для торговли
-tp = 0.024
-sl = 0.012
-
-# Отсчет времени и количества запросов
-i = 0
-
-async def main():
-    global url_count, i
+def main():
+    global headers, tp, sl
     while True:
         try:
             while True:
                 try:
-                    url = 'https://t.me/pump_dump_screener_demo/' + str(url_count)
-
-                    # Получаем данные из http запроса
-                    try:
-                        response = requests.get(url, headers)
-                    except:
-                        print('ошибка. повторение запроса/время: ', datetime.now())
-                        response = requests.get(url, headers)
-                    soup = BeautifulSoup(response.text, 'lxml')
-                    data = soup.find_all('meta')
-
-                    # Исходя из данных принимаем решение на сторону ставки
-                    for content in data:
-                        if '🔴' in str(content) or '🟢' in str(content):
-                            print('начало создание ордера. время - ', datetime.now())
-                            elements = str(content).split()
-                            ticker = str(elements[1][11:-1] + 'USDT')
-                            tickers = await get_tickers()
-                            tickerDone = await find_tickerDone(ticker, tickers)
-                            url_count += 1
-                            balance_usdt = await get_balance()
-                            qty = int((float(balance_usdt) - 5) * 10)
-
-                            if str(content).count('🔴') == 1:
-                                if tickerDone in tickers and balance_usdt != 0:
-                                    await place_order(tickerDone, 1, qty, tp, sl)
-
-                            if str(content).count('🟢') == 1:
-                                if tickerDone in tickers and balance_usdt != 0:
-                                    await place_order(tickerDone, 0, qty, tp, sl)
+                    print(f'\n\nstart/time - плдюююююю\n\n')                    
+                    signal = smq()
+                    print(signal)
                             
-                            with open('urlCount.txt', 'w', encoding='utf-8') as f:
-                                f.write(str(url_count))
-                            with open('urlCount.txt', 'r', encoding='utf-8') as f:
-                                url_count = int(f.read())
-                            break
-                    i += 1
-                    print(i, datetime.now(), url_count)
+                    balance_usdt = get_balance()
+                    balanceWL = Decimal(balance_usdt)
+                    mark_price = Decimal(get_last_price(signal[0]))
+                    roundQty =  get_roundQty(signal[0])
+                    if signal[1] < 0:
+                        place_order(signal[0], 'Buy', mark_price, roundQty, balanceWL, tp, sl)
+                    if signal[1] > 0:
+                        place_order(signal[0], 'Sell', mark_price, roundQty, balanceWL, tp, sl)
+                    break
                 except Exception as er:
-                    print(er, datetime.now())
+                    pprint(er)
         except Exception as er:
-            print(er)
+            pprint(er)
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
