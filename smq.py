@@ -1,104 +1,56 @@
 from pybit.unified_trading import HTTP
 import time
-from decimal import Decimal
-from multiprocessing import Process, Queue
+from decimal import Decimal as D
+from datetime import datetime
 
-THRESHOLD_PERCENT = 0.5
+THRESHOLD_PERCENT = 8
+LIMIT_PERCENT = 20
 session = HTTP()
 
-def get_tickers():
-    info = session.get_tickers(category='linear')['result']['list']
-    return [ticker['symbol'] for ticker in info if 'USDC' not in ticker['symbol'] and 'USDT' in ticker['symbol']]
+def fetch_data():
+    data = session.get_tickers(category='linear')['result']['list']
+    print(f'{datetime.now()}: Получил новые данные')
+    return data
 
-def scrcr1(queue):
+def validate(data_new, prices_old):
+    for price_new in data_new:
+        symbol = price_new['symbol'] if 'USDT' in price_new['symbol'] else None
+        if symbol in prices_old:
+            percent_change = round(((D(price_new['lastPrice']) - prices_old[symbol]) / prices_old[symbol]) * 100, 2)
+            if abs(percent_change) >= THRESHOLD_PERCENT and abs(percent_change) < LIMIT_PERCENT:
+                with open('/CODE_PROJECTS/SMQ-N & Python/signal.txt', 'w', encoding='utf-8') as f:
+                    if percent_change < 0:
+                        side = 'Buy'
+                        # f.write(f'🔴Ticker: {symbol}\n'
+                        #         f'Percent: {percent_change}%\n'
+                        #         f'Datetime: {datetime.now()}')
+                    if percent_change > 0:
+                        side = 'Sell'
+                        # f.write(f'🟢Ticker: {symbol}\n'
+                        #         f'Percent: {percent_change}%\n'
+                        #         f'Datetime: {datetime.now()}')
+                return symbol, side
+            else:
+                None
+
+def smq(prices_old):
+    time.sleep(0.5)
+    print(f'Check data. Time: {datetime.now()}')
+    data_new = session.get_tickers(category='linear')['result']['list']
+    signal = validate(data_new=data_new, prices_old=prices_old)
+    if signal != None:
+        return signal
+
+if __name__ == '__main__':
+    data_old = fetch_data()
+    prices_old = {price['symbol']: D(price['lastPrice']) for price in data_old}
+    start_time = time.time()
     while True:
-        print('я бог криптовалюты и я анализирую рынок. попытка номер плю1')
-        data_old = session.get_tickers(category='linear')['result']['list']
-        pricesOld = []
-        for price in data_old:
-            pricesOld.append(Decimal(price['lastPrice']))
-        time.sleep(60)
-
-        data_new = session.get_tickers(category='linear')['result']['list']
-        for priceOld, priceNew in zip(data_old, data_new):
-            percent_change = round(((Decimal(priceNew['lastPrice']) - Decimal(priceOld['lastPrice'])) / Decimal(priceOld['lastPrice'])) * 100, 2)
-            if abs(percent_change) >= THRESHOLD_PERCENT:
-                queue.put((priceNew['symbol'], percent_change))
-
-def scrcr2(queue):
-    while True:
-        print('я бог криптовалюты и я анализирую рынок. попытка номер плю2')
-        data_old = session.get_tickers(category='linear')['result']['list']
-        pricesOld = []
-        for price in data_old:
-            pricesOld.append(Decimal(price['lastPrice']))
-        time.sleep(20)
-
-        data_new = session.get_tickers(category='linear')['result']['list']
-        for priceOld, priceNew in zip(data_old, data_new):
-            percent_change = round(((Decimal(priceNew['lastPrice']) - Decimal(priceOld['lastPrice'])) / Decimal(priceOld['lastPrice'])) * 100, 2)
-            if abs(percent_change) >= THRESHOLD_PERCENT:
-                queue.put((priceNew['symbol'], percent_change))
-
-def scrcr3(queue):
-    while True:
-        print('я второй бог криптовалюты и я анализирую рынок. попытка номер плю3')
-        data_old = session.get_tickers(category='linear')['result']['list']
-        pricesOld = []
-        for price in data_old:
-            pricesOld.append(Decimal(price['lastPrice']))
-        time.sleep(5)
-
-        data_new = session.get_tickers(category='linear')['result']['list']
-        for priceOld, priceNew in zip(data_old, data_new):
-            percent_change = round(((Decimal(priceNew['lastPrice']) - Decimal(priceOld['lastPrice'])) / Decimal(priceOld['lastPrice'])) * 100, 2)
-            if abs(percent_change) >= THRESHOLD_PERCENT:
-                queue.put((priceNew['symbol'], percent_change))
-
-def scrcr4(queue):
-    while True:
-        print('я третий бог криптовалюты и я анализирую рынок. попытка номер плю4')
-        data_old = session.get_tickers(category='linear')['result']['list']
-        pricesOld = []
-        for price in data_old:
-            pricesOld.append(Decimal(price['lastPrice']))
-        time.sleep(2)
-
-        data_new = session.get_tickers(category='linear')['result']['list']
-        for priceOld, priceNew in zip(data_old, data_new):
-            percent_change = round(((Decimal(priceNew['lastPrice']) - Decimal(priceOld['lastPrice'])) / Decimal(priceOld['lastPrice'])) * 100, 2)
-            if abs(percent_change) >= THRESHOLD_PERCENT:
-                queue.put((priceNew['symbol'], percent_change))
-            
-def smq():
-    queue = Queue()
-    process1 = Process(target=scrcr1, args=(queue,))
-    process2 = Process(target=scrcr2, args=(queue,))
-    process3 = Process(target=scrcr3, args=(queue,))
-    process4 = Process(target=scrcr4, args=(queue,))
-
-    process1.start()
-    process2.start()
-    process3.start()
-    process4.start()
-
-    result = queue.get()
-    if result is not None:
-        with open('/CODE_PROJECTS/SMQ-N-V2 & Python/signal.txt', 'w', encoding='utf-8') as f:
-            if result[1] < 0:
-                f.write(f'🔴Ticker: {result[0]}\n'
-                        f'Percent - {result[1]}%')
-            if result[1] > 0:
-                f.write(f'🟢Ticker: {result[0]}\n'
-                        f'Percent - {result[1]}%')
-        return result
-
-    process1.join()
-    process2.join()
-    process3.join()
-    process4.join()
-
-# if __name__ == '__main__':
-#     while True:
-#         signal = smq()
-#         print(signal)
+        if time.time() - start_time >= 60:
+            data_old = fetch_data()
+            prices_old = {price['symbol']: D(price['lastPrice']) for price in data_old}
+            start_time = time.time()
+        signal = smq(prices_old=prices_old)
+        if signal != None:
+            # break
+            pass
