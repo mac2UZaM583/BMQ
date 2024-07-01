@@ -22,7 +22,7 @@ import traceback
 
 print(f'\n\nSTART-V1-V2\n\n')
 data_update = 60
-tp = D(0.012)
+tp = D(0.030)
 sl = D(0.050)
 
 '''PRE ↓
