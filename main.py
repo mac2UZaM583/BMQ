@@ -1,77 +1,78 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+from smq import smq_get_data, smq
+from get import get_round_qty, get_get_data
+from set import *
+from keys import session
+from asyncio import to_thread, gather, run
+from settings__ import files_content
+from itertools import count
+from datetime import datetime
+from pprint import pprint
 
-from smq import smq, fetch_data
-from bmq_v2.keys import session
-from bmq_v2.read import (
-    get_balance as gb, 
-    get_roundQty as gr, 
-    get_last_price as gl,
-)
-from bmq_v2.write import (
-    switch_margin_mode as smm, 
-    place_order as po, 
-    TP,
-    SL,
-    cancel_position
-)
-from decimal import Decimal as D
-import time
-import traceback
-
-print(f'\n\nSTART-V1-V2\n\n')
 data_update = 60
-tp = D(0.030)
-sl = D(0.050)
+tp = None
+sl = float(files_content['STOPLOSS'])
+counter = count(start=0, step=1)
 
-'''PRE ↓
-'''
-def pre_main1():
-    data_old = fetch_data()
-    prices_old = {price['symbol']: D(price['lastPrice']) for price in data_old}
+async def in_cycle_funcs(result):
+    positions = result[0]['result']['list']
+    if positions:
+        position = positions[-1]
+        symbol = position['symbol']
+        avg_price = float(position['avgPrice'])
+        round_qty = get_round_qty(symbol)
+        tasks_2 = [
+            to_thread(TP, position, symbol, round_qty, avg_price, tp),
+            to_thread(SL, position, symbol, round_qty, avg_price, sl)
+        ]
+        await gather(*tasks_2)
+
+async def cycle(data_update):
+    data_old = smq_get_data()
     start_time = time.time()
     while True:
-        positions = session.get_positions(category='linear', settleCoin='USDT')['result']['list']
-        if positions:
-            TP(position=positions[-1], tp=tp)
-            SL(position=positions[-1], sl=sl)
-
         if time.time() - start_time >= data_update:
-            data_old = fetch_data()
-            prices_old = {price['symbol']: D(price['lastPrice']) for price in data_old}
+            print('data collected')
+            data_old = smq_get_data()
             start_time = time.time()
-        signal = smq(prices_old=prices_old)
-        if signal != None:
-            print(signal)
-            return signal, positions
+        print(next(counter), datetime.now())
+        tasks_1 = [
+        to_thread(session.get_positions, category='linear', settleCoin='USDT'),
+        to_thread(smq, data_old)
+        ]
+        result = await gather(*tasks_1)
+        signal = result[1]
+        await in_cycle_funcs(result)
 
-'''POST ↓
-'''
-def pre_main2(signal, positions):
-    balanceWL = gb() * 9.99
-    roundQty =  gr(signal[0])
-    if not positions:
-        smm(symbol=signal[0])
-        mark_price = gl(signal[0])
-        qty = round(balanceWL / mark_price, roundQty[1])
-        po(symbol=signal[0], side=signal[0], qty=qty)
+        if signal:
+            return signal
+
+# @time_measurements
+def post_cycle(signal):
+    data = run(get_get_data(signal[0]))
+    if not data[-1]['result']['list']:
+        qty = round(
+            ((data[0] * 10) / float(files_content['BALANCE_DIVIDER'])) / data[1], 
+            data[2][0]
+        )
+        global tp
+        tp = 1 - ((signal[1] - 1) / 2.5)
+        place_order(signal[0], qty)
 
 def main():
     while True:
         try:
-            '''PRE ↓
+            '''CYCLE ⭣
             '''
-            signal, positions = pre_main1()
+            signal = run(cycle(data_update))
+            print(signal)
             
-            '''POST ↓
+            '''MAIN ⭣
             '''
-            pre_main2(signal=signal, positions=positions)
+            post_cycle(signal)
         except:
+            traceback.print_exc()
             cancel_position()
-            er = traceback.format_exc()
-            # with open('/CODE_PROJECTS/SMQ-N & Python/signal.txt', 'w', encoding='utf-8') as f:
-            #     f.write(f'{er}\n\ntime: {time.time()}')
 
 if __name__ == '__main__':
-    main()
+    s_leverage_and_margin_mode()
+    main() #⭠⭡⭢⭣⭤ ⭥⮂⮃
